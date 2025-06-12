@@ -1,0 +1,193 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# GlobalCampus 프로젝트 개발 규칙
+
+GlobalCampus는 외국인 유학생을 위한 커뮤니티 플랫폼입니다.
+
+## 🏗️ 프로젝트 아키텍처
+
+### 백엔드 서비스
+- **데이터베이스**: Supabase PostgreSQL
+- **인증**: Supabase Auth
+- **스토리지**: Supabase Storage (이미지/파일 업로드)
+- **실시간**: Supabase Realtime (채팅 기능)
+
+### 핵심 설정 파일
+- [src/lib/supabase.ts](mdc:src/lib/supabase.ts) - Supabase 클라이언트 설정
+- [supabase/schema.sql](mdc:supabase/schema.sql) - 데이터베이스 스키마
+- [src/types/index.ts](mdc:src/types/index.ts) - 프로젝트 타입 정의
+- [src/lib/utils.ts](mdc:src/lib/utils.ts) - 공통 유틸리티 함수
+
+### 인증 관리
+- [src/hooks/useAuth.ts](mdc:src/hooks/useAuth.ts) - 인증 상태 관리 훅
+
+## 🎯 기능별 개발 가이드
+
+### 1. 사용자 인증
+```typescript
+// useAuth 훅 사용 예시
+const { user, profile, isAuthenticated, signInWithEmail, signOut } = useAuth();
+
+// 로그인 페이지: src/app/login/page.tsx
+// 회원가입 페이지: src/app/signup/page.tsx
+```
+
+### 2. 게시글 관리
+```typescript
+// 게시글 카테고리 타입
+type PostCategory = 'general' | 'question' | 'event' | 'marketplace' | 'study' | 'housing' | 'job';
+
+// 게시글 목록: src/app/posts/page.tsx
+// 게시글 상세: src/app/posts/[id]/page.tsx  
+// 게시글 작성: src/app/posts/create/page.tsx
+```
+
+### 3. 실시간 채팅
+```typescript
+// 채팅방 목록: src/app/chat/page.tsx
+// 개별 채팅방: src/app/chat/[id]/page.tsx
+// Supabase Realtime 활용
+```
+
+### 4. 이벤트 관리
+```typescript
+// 이벤트 목록: src/app/events/page.tsx
+// 이벤트 상세: src/app/events/[id]/page.tsx
+// 이벤트 생성: src/app/events/create/page.tsx
+```
+
+## 🎨 UI/UX 패턴
+
+### 1. 디자인 시스템
+- **색상**: 파란색 계열 (blue-600이 주색상)
+- **폰트**: Inter 폰트 사용
+- **아이콘**: Lucide React 아이콘 세트
+- **컴포넌트**: Radix UI 기반
+
+### 2. 반응형 디자인 원칙
+```typescript
+// 모바일 우선 접근법
+className="px-4 sm:px-6 lg:px-8"  // 패딩
+className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4"  // 그리드
+```
+
+### 3. 공통 컴포넌트 패턴
+```typescript
+// 네비게이션: src/components/layout/Navbar.tsx
+// 버튼, 카드, 모달 등 재사용 가능한 컴포넌트는 src/components/ui/ 디렉토리
+```
+
+## 🔄 상태 관리 패턴
+
+### 1. 서버 상태
+```typescript
+// Supabase 클라이언트로 직접 데이터 페칭
+const { data, error } = await supabase
+  .from('posts')
+  .select('*')
+  .order('created_at', { ascending: false });
+```
+
+### 2. 클라이언트 상태
+```typescript
+// useState로 로컬 상태 관리
+const [loading, setLoading] = useState(false);
+const [posts, setPosts] = useState<Post[]>([]);
+```
+
+### 3. 인증 상태
+```typescript
+// useAuth 훅으로 전역 인증 상태 관리
+// Context API 패턴 사용하지 않고 custom hook으로 구현
+```
+
+## 🛡️ 보안 및 권한 관리
+
+### 1. Row Level Security (RLS)
+- Supabase RLS 정책으로 데이터 접근 제어
+- 사용자는 자신의 데이터만 수정/삭제 가능
+- 게시글과 댓글은 모든 사용자가 조회 가능
+
+### 2. 클라이언트 사이드 보안
+```typescript
+// 민감한 작업 전 인증 상태 확인
+if (!isAuthenticated) {
+  router.push('/login');
+  return;
+}
+```
+
+## 🌐 다국어 지원 전략
+
+### 1. 지원 언어
+- 한국어 (기본)
+- 영어 (추후 구현)
+- 중국어 (추후 구현)
+- 일본어 (추후 구현)
+
+### 2. 구현 방식
+```typescript
+// 텍스트 하드코딩 지양
+// i18n 라이브러리 도입 준비
+// 사용자 언어 설정 저장
+```
+
+## 📱 모바일 최적화
+
+### 1. 터치 인터페이스
+- 버튼 최소 크기 44px × 44px
+- 스와이프 제스처 고려
+- 터치 피드백 제공
+
+### 2. 성능 최적화
+```typescript
+// 이미지 lazy loading
+// 무한 스크롤 구현
+// 오프라인 대응 (PWA 고려)
+```
+
+## 🔧 개발 워크플로우
+
+### 1. 코드 작성 순서
+1. 타입 정의 (src/types/)
+2. API 로직 (Supabase 연동)
+3. UI 컴포넌트 구현
+4. 상태 관리 연결
+5. 스타일링 (Tailwind)
+6. 테스트 및 최적화
+
+### 2. 명명 규칙
+- **파일명**: kebab-case (post-list.tsx)
+- **컴포넌트명**: PascalCase (PostList)
+- **함수명**: camelCase (fetchPosts)
+- **상수명**: SCREAMING_SNAKE_CASE (MAX_FILE_SIZE)
+
+### 3. 폴더 구조 규칙
+```
+src/
+├── app/                 # 페이지 라우팅
+├── components/          # 재사용 컴포넌트
+│   ├── ui/             # 기본 UI 컴포넌트
+│   ├── layout/         # 레이아웃 컴포넌트
+│   └── forms/          # 폼 컴포넌트
+├── hooks/              # Custom hooks
+├── lib/                # 유틸리티 및 설정
+└── types/              # TypeScript 타입
+```
+
+## 🚀 배포 및 운영
+
+### 1. 환경별 설정
+- **개발**: localhost:3000
+- **스테이징**: Vercel Preview
+- **프로덕션**: Vercel Production
+
+### 2. 모니터링
+- Vercel Analytics
+- Supabase 대시보드
+- 에러 트래킹 (추후 Sentry 도입 고려)
+
+이 규칙들을 따라 GlobalCampus 프로젝트를 일관성 있게 개발할 수 있습니다.

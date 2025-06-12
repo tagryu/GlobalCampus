@@ -1,0 +1,227 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Next.js 14 App Router Development Rules
+
+이 프로젝트는 Next.js 14 App Router를 사용하는 TypeScript 기반의 현대적인 웹 애플리케이션입니다.
+
+## 📁 프로젝트 구조
+
+### 핵심 설정 파일
+- [next.config.ts](mdc:next.config.ts) - Next.js 설정
+- [tailwind.config.ts](mdc:tailwind.config.ts) - Tailwind CSS 설정  
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript 설정
+- [package.json](mdc:package.json) - 의존성 및 스크립트
+
+### App Router 구조
+- [src/app/layout.tsx](mdc:src/app/layout.tsx) - 루트 레이아웃
+- [src/app/page.tsx](mdc:src/app/page.tsx) - 홈페이지
+- [src/app/globals.css](mdc:src/app/globals.css) - 글로벌 스타일
+
+### 컴포넌트 구조
+- [src/components/layout/Navbar.tsx](mdc:src/components/layout/Navbar.tsx) - 네비게이션 바
+- [src/components/](mdc:src/components) - 재사용 가능한 컴포넌트
+- [src/hooks/](mdc:src/hooks) - Custom React Hooks
+- [src/lib/](mdc:src/lib) - 유틸리티 함수
+- [src/types/](mdc:src/types) - TypeScript 타입 정의
+
+## 🎯 개발 가이드라인
+
+### 1. App Router 파일 컨벤션
+```
+app/
+├── page.tsx          # 페이지 컴포넌트
+├── layout.tsx        # 레이아웃 컴포넌트
+├── loading.tsx       # 로딩 UI
+├── error.tsx         # 에러 UI
+├── not-found.tsx     # 404 페이지
+└── route.ts          # API 라우트
+```
+
+### 2. Server vs Client Components
+- **기본적으로 Server Components 사용**
+- `'use client'` 지시어는 필요한 경우에만 사용:
+  - 이벤트 핸들러가 필요한 경우
+  - useState, useEffect 등 React hooks 사용
+  - 브라우저 전용 API 사용
+  - 실시간 상호작용이 필요한 경우
+
+### 3. 라우팅 패턴
+```
+app/
+├── posts/
+│   ├── page.tsx           # /posts
+│   ├── [id]/
+│   │   └── page.tsx       # /posts/[id]
+│   └── create/
+│       └── page.tsx       # /posts/create
+├── (auth)/
+│   ├── login/
+│   │   └── page.tsx       # /login (그룹 라우팅)
+│   └── signup/
+│       └── page.tsx       # /signup
+```
+
+### 4. 메타데이터 관리
+```typescript
+// Static metadata
+export const metadata: Metadata = {
+  title: 'Page Title',
+  description: 'Page description'
+}
+
+// Dynamic metadata
+export async function generateMetadata({ params }): Promise<Metadata> {
+  return {
+    title: `Dynamic Title - ${params.id}`,
+  }
+}
+```
+
+### 5. 데이터 페칭 패턴
+```typescript
+// Server Component에서 직접 fetch
+async function getData() {
+  const res = await fetch('https://api.example.com/data', {
+    cache: 'force-cache' // 캐싱 전략
+  })
+  return res.json()
+}
+
+// Client Component에서 useEffect + useState 또는 SWR/React Query 사용
+```
+
+### 6. TypeScript 타입 관리
+- [src/types/index.ts](mdc:src/types/index.ts)에서 공통 타입 정의
+- 각 기능별로 namespace 또는 모듈 분리
+- API 응답 타입과 UI 상태 타입 분리
+
+### 7. Tailwind CSS 사용법
+- Utility-first 접근 방식
+- [src/lib/utils.ts](mdc:src/lib/utils.ts)의 `cn()` 함수로 조건부 클래스 관리
+- 컴포넌트별 스타일 분리 지양, 유틸리티 클래스 활용
+
+### 8. 에러 처리
+```typescript
+// error.tsx
+'use client'
+ 
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string }
+  reset: () => void
+}) {
+  return (
+    <div>
+      <h2>Something went wrong!</h2>
+      <button onClick={() => reset()}>Try again</button>
+    </div>
+  )
+}
+```
+
+### 9. 로딩 상태 관리
+```typescript
+// loading.tsx
+export default function Loading() {
+  return <div>Loading...</div>
+}
+
+// Suspense 활용
+<Suspense fallback={<Loading />}>
+  <SlowComponent />
+</Suspense>
+```
+
+## 🔧 성능 최적화
+
+### 1. 이미지 최적화
+```typescript
+import Image from 'next/image'
+
+<Image
+  src="/profile.jpg"
+  alt="Profile"
+  width={500}
+  height={300}
+  priority // LCP 이미지의 경우
+/>
+```
+
+### 2. 폰트 최적화
+```typescript
+import { Inter } from 'next/font/google'
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+})
+```
+
+### 3. 동적 import
+```typescript
+const DynamicComponent = dynamic(() => import('./Component'), {
+  loading: () => <p>Loading...</p>,
+})
+```
+
+## 🚀 배포 최적화
+
+### 1. 환경 변수 관리
+- `.env.local` - 로컬 개발용
+- `.env.production` - 프로덕션용
+- 클라이언트 노출 변수는 `NEXT_PUBLIC_` 접두사 사용
+
+### 2. 빌드 최적화
+```bash
+npm run build    # 프로덕션 빌드
+npm run start    # 프로덕션 서버 실행
+npm run lint     # ESLint 검사
+```
+
+### 3. Vercel 배포 설정
+- [vercel.json](mdc:vercel.json) 설정 파일 (필요시)
+- 환경 변수 Vercel 대시보드에서 설정
+
+## 🎨 UI/UX 가이드라인
+
+### 1. 반응형 디자인
+```typescript
+// Tailwind breakpoints
+sm: '640px'   // Mobile
+md: '768px'   // Tablet  
+lg: '1024px'  // Desktop
+xl: '1280px'  // Large Desktop
+```
+
+### 2. 접근성 (a11y)
+- semantic HTML 태그 사용
+- alt 텍스트 제공
+- 키보드 네비게이션 지원
+- ARIA 속성 적절히 사용
+
+### 3. 다국어 지원 준비
+- 텍스트 하드코딩 지양
+- i18n 라이브러리 활용 준비
+
+## 🔐 보안 가이드라인
+
+### 1. 환경 변수 보안
+- 민감한 정보는 서버 사이드에서만 접근
+- API 키는 `NEXT_PUBLIC_` 접두사 사용 금지
+
+### 2. API 라우트 보안
+```typescript
+// app/api/posts/route.ts
+export async function POST(request: Request) {
+  // 인증 확인
+  // 입력 값 검증
+  // 응답 데이터 필터링
+}
+```
+
+이 규칙들을 따라 개발하면 현대적이고 확장 가능한 Next.js 애플리케이션을 구축할 수 있습니다.
